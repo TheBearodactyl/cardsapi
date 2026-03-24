@@ -48,6 +48,7 @@ fn rocket() -> _ {
                 routes::join_room,
                 routes::leave_room,
                 routes::start_game,
+                routes::get_game_state,
                 routes::submit_action,
                 routes::get_player,
                 routes::update_player,

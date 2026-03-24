@@ -217,6 +217,31 @@ pub async fn start_game(
 
 
 
+#[rocket::get("/api/rooms/<code>/state")]
+pub async fn get_game_state(
+    player: PlayerId,
+    code: &str,
+    state: &State<SharedState>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let players_store = state.players.read().await;
+    let rooms = state.rooms.read().await;
+    let room_state = rooms.get(code).ok_or(ApiError::RoomNotFound)?;
+
+    if !room_state.room.players.iter().any(|p| p.id == player.0) {
+        return Err(ApiError::PlayerNotInRoom);
+    }
+
+    let game = room_state
+        .game
+        .as_ref()
+        .ok_or(ApiError::InvalidAction("Game has not started".into()))?;
+
+    let names = room_state.player_names(&players_store);
+    let view = game.get_state_for_player(player.0, &names);
+
+    Ok(Json(view))
+}
+
 #[rocket::post("/api/rooms/<code>/action", data = "<body>")]
 pub async fn submit_action(
     player: PlayerId,
